@@ -1,0 +1,20 @@
+- lombok 이란?
+코딩을 하며 클래스에 변수를 작성하고 get/set 메소드를 작성하는 등의 실습을 해보았다.
+이때 generator는 생성자를 만들어주지는 않는다. 이러한 기능을 제공하는 것이 lombok이다.
+
+annotation기능으로 ex) @Data 로 사용이 가능하다.
+기본 생성자와 get/set 메소드를 모두 생성해주나 코드로는 작성할 필요가 없다.
+
+
+
+- JPA : Java Persistent API => 라이브러리
+ORM(Object Relational Mapping)으로, RDB(Relational Database) 데이터 베이스의 정보를
+객체지향으로 손쉽게 활용할 수 있도록 도와주는 도구이다.
+
+Object(자바 객체)와 Relation(관계형 데이터베이스) 둘간의 맵핑을 통해서 보다 손쉽게
+적용할 수 있는 기술을 제공해준다.
+
+또한 쿼리에 집중하기 보다는 객체에 집중함으로써, 조금 더 프로그래밍적으로 활용할 수 있다.
+
+* mysql workbench를 이용해 실습 진행.
+mysql에서 만든 스키마를 build.gradle 파일에 연결시킨다.

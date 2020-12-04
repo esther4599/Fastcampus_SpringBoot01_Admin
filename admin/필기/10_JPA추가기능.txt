@@ -1,0 +1,44 @@
+JPA의 추가 기능
+
+공통으로 다양한 테이블에서 사용하던 아래으 코드들.
+
+private LocalDateTime createdAt;
+private String createdBy;
+private LocalDateTime updatedAt;
+private String updatedBy;
+jpa에서는 위의 코드를 자동으로 설정하도록 할 수 있다.
+========================================================
+
+=> com.project.admin 패키지에서 config라는 패키지를 생성한다.
+=> JPAConfig class 생성
+    @Configuration = 설정 파일임을 알리는 주석
+    @EnableJpaAuditing = 활성화를 시키겠다는 의미
+
+========================================================
+
+=> com.project.admin 패키지에서 component 라는 패키지를 생성한다.
+=> LoginUserAuditorAware class 생성 //로그인한 사용자를 감시하는 역할로 사용할 class
+    @Component //컴포넌트임을 알리는 주석
+    implements AuditorAware<String>
+
+클래스 명에서 'alt + enter' or 옆에 오류 아이콘 => implements ~~
+==> 위의 메소드는 현재 감시자를 가져와 업데이트를 하거나 등록을할 때 입력할 담당자의 이름을
+    반환하는 함수이다. 현재는 감시자를 설정해두지 않았으므로 예시의 코드대로 작성한다.
+    ex) createdBy, updatedBy 에 들어갈 이름
+    ex) 메소드 코드 :
+        public Optional<String> getCurrentAuditor() {
+                return Optional.of("AdminServer");
+        }
+
+========================================================
+
+이후 AdminUser의 createdBy 에는 @CreatedBy 주석,
+updatedBy 에는 @LastModifiedBy 주석
+==> 해당 주석이 달린 부분에는 위의 예시 코드에 적힌 AdminServer가 들어간다.
+
+createdAt 에 @CreatedDate 주석,
+updatedAt 에 @LastModifiedDate 주석
+==> 알아서 시간이 들어간다.
+
+AdminUser class 에는 @EntityListeners(AuditingEntityListener.class) 주석을 단다.
+==> 이는 감시자를 설정해주는 코드로 괄호 안에 감시자를 설정한다.

@@ -1,0 +1,24 @@
+
+기본적으로 프로젝트에서 제공하는 코드를 받아와서 실행한다.
+
+test에서 lombok을 사용하여 log를 남기는 코드가 존재
+=> 아래의 설정을 build.gradle에 해주어야 오류가 발생하지 않는다.
+
+	testAnnotationProcessor 'org.projectlombok:lombok'
+	testCompileOnly 'org.projectlombok:lombok'
+
+test 코드의 경우 test 폴더 내에 있는 repository를 사용하므로
+sample 코드의 error는 test.repository 코드를 수정하여 사용한다.
+
+===========================
+
+> No tests found for given includes: [com.project.admin.sample.UserSample.sampleCreate](filter.includeTestsMatching)
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
+* Get more help at https://help.gradle.org
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 7.0.
+Use '--warning-mode all' to show the individual deprecation warnings.
+See https://docs.gradle.org/6.6.1/userguide/command_line_interface.html#sec:command_line_warnings
+BUILD FAILED in 1s
+
+위와 같은 경우 @Test 주석 지우고 다시 달아주기. import가 잘못된 경우가 많다.

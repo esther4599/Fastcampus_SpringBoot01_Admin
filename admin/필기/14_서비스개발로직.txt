@@ -1,0 +1,171 @@
+1. 사용자 api create()
+json body 부분에 들어갈 데이터를 받아줄 준비를 해야한다.
+
+-request
+network.request 패키지에 request 요청을 받아주 클래스는 여기에 정의한다.
+front end 에서 보낸 요청을 받는다.
+
+-response
+network.response 패키지에 request에 대한 반응을 해주는 클래스를 여기에 정의한다.
+request가 들어오면 header를 제외한 data 영역의 데이터를 처리해서 내려주는 것
+
+왜 똑같은 작업을 두번할까??
+=> 요청을 할때는 password가 평문으로 들어오지만 reponse로 내려줄 때는
+이부분을 암호화해서 내려줄 수 있기 때문에 따로 클래스를 분리해 관리하는 것이 좋다
+
+-controller
+위의 두 객체를 주고 받으며 통신할 수 있도록 하는 클래스
+
+++
+network = 통신에 사용할 객체들
+controller = 통신 함수가 들어갈 객체
+++
+
+-service = 데이터를 만든다거나 수정한다거나 하는 기능 담당
+admin.service 패키지에 작성
+@Service 사용, CRUD 인터페이스 상속받음
+이후에 repository Test에서 했듯이 코딩을 진행한다.
+
+--------------------------------------------------------------
+
+@Slf4j 기능
+log.info("{}, {}", request, "ABC");
+위의 코드 결과 "request.toString(), ABC" 라는 로그가 파일에 남는다.
+
+creat test
+Restlet client (크롬에  설치한 테스트 확인용)에서 아래의 데이터를 입력하고 주소입력, 함수 post로 설정하고 테스트 진행하기
+{
+  "transaction_time":"2019-07-31T22:57:56.692",
+  "resultCode":"OK",
+  "description":"OK",
+  "data":{
+    "account":"createTest01",
+    "password":"createTest01PW",
+    "status":"UNREGISTERED",
+    "email":"createTest01@gmail.com",
+    "phone_number":"010-1234-5678"
+  }
+}
+
+--------------------------------------------------------------
+
+2. 사용자 api read()
+검색 조건은 사용자의 id 이다.
+
+userApiLogicService에서 read()함수 아래와 같이 작성
+
+optional.map(user -> response(user))
+        .orElseGet( () ->Header.ERROR("데이터 없음"));
+
+Restlet client (크롬에  설치한 테스트 확인용)에서 아래의 주소 입력, 함수 get로 설정하고 테스트 진행하기
+http://localhost:8080/api/user/1
+
+코드의 orElseGet 덕분에 존재하지 않는 id를 입력하면
+{
+    "transaction_time": "2020-11-24T23:24:51.464126",
+    "result_code": "ERROR",
+    "description": "데이터 없음",
+    "data": null
+}
+위와 같은 결과가 출력된다.
+
+--------------------------------------------------------------
+
+3. 사용자 api update()
+사용자의 정보를 입력해 데이터를 update 한다.
+userApiLogicService에서 아래 코드 작성
+
+return userRepository.findById(userApiRequest.getId()) // 2. id를 가지고 user data 찾기
+    .map(user -> {
+    // update할 user의 데이터 정리
+    user.setAccount(user.getAccount())
+        .setPassword(user.getPassword())
+        .setStatus(user.getStatus())
+        .setPhoneNumber(user.getPhoneNumber())
+        .setEmail(user.getEmail())
+        .setRegisteredAt(user.getRegisteredAt())
+        .setUnregisteredAt(user.getUnregisteredAt());
+        return user;
+    })
+    .map(user -> userRepository.save(user)) // 3. update == db 반영
+    .map(updatedUser -> response(updatedUser)) // 4. userApiResponse return
+    .orElseGet(() -> Header.ERROR("데이터 없음")); // NULL인 경우
+
+Restlet client (크롬에  설치한 테스트 확인용)에서 아래의 주소와 데이터 입력, 함수 put으로 설정하고 테스트 진행하기
+http://localhost:8080/api/user
+{
+  "transaction_time": "2020-11-25T00:33:21.194561",
+  "result_code": "OK",
+  "description": "OK",
+  "data":{
+    "id": 1,
+	"account": "test01",
+	"password": "test01pw",
+	"status": "UNREGISTERED",
+	"email": "test01@gmail.com",
+	"phone_number": null,
+	"registered_at": "2020-11-16T18:42:53",
+	"unregistered_at": null
+	}
+}
+
+//아래는 return 되는 response
+{
+"transaction_time": "2020-11-25T00:48:19.121883",
+"result_code": "OK",
+"description": "OK",
+"data":{
+"id": 1,
+"account": "testUser01",
+"password": "test01PW",
+"status": "UNREGISTERED",
+"email": "test01@gmail.com",
+"phone_number": null,
+"registered_at": "2020-11-11T18:42:53",
+"unregistered_at": "2020-11-16T18:42:53"
+}
+}
+
+--------------------------------------------------------------
+
+4. 사용자 api delete()
+데이터를 삭제시키는 함수이므로 response로 수행 여부만 반환한다.
+*** 수행 여부만 return  = data의 generic 없이 header만 return
+
+return userRepository.findById(id)
+    .map(user -> {
+        userRepository.delete(user); // repository -> delete
+        return Header.OK();
+    })
+    .orElseGet(() -> Header.ERROR("데이터 없음")); //response return
+
+Restlet client (크롬에  설치한 테스트 확인용)에서 아래의 주소 입력, 함수 delete로 설정하고 테스트 진행하기
+http://localhost:8080/api/user/1
+
+아래는 테스트 수행 결과
+{
+    "transaction_time": "2020-11-25T01:30:38.14592",
+    "result_code": "OK",
+    "description": "OK",
+    "data": null
+}
+
+--------------------------------------------------------------
+item create 실습시 사용한 데이터
+
+{
+  "transaction_time": "2020-11-25T03:43:51.183746",
+  "result_code": "OK",
+  "description": "OK",
+  "data":{
+    "status": "REGISTERED",
+    "name": "HP 노트북 프로북",
+    "title": "HP 노트북",
+    "content": "2020년형 노트북",
+    "price": 890000.0000,
+    "brand_name": "HP",
+    "registered_at": "2020-11-16T23:53:47.185888",
+    "unregistered_at": null,
+    "partner_id": 1
+  }
+}

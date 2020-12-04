@@ -1,0 +1,6 @@
+project 내에 있는 test라는 폴더의 파일을 이용해 테스트를 진행한다.
+=> 테스트를 진행할 클래스에는 test 폴더에 기본으로 생성된 클래스를 상속받아야 한다.
+
+UserRepositoryTest를 작성해서 사용
+Autoweid를 이용해서 해당 클래스를 한번만 생성
+객체 User에 데이터를 저장하고 만든 객체를 UserRepository 클래스에서 상속받은 JpaRepository<>의 .save() 함수를 실행해 데이터베이스에 저장한다.

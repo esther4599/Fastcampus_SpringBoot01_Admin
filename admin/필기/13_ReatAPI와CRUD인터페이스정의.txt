@@ -1,0 +1,71 @@
+작성하게 될 response sample을 보면
+
+{
+    ------------------------------
+    --header-- //time 빼고 보통 돌아오는 값이 고정
+    "transaction_time"."2020~~~~"
+    "result_code"."OK" //해당 http 통에 대한 응답 -> status를 통해서 관리하지만 따로 표기하기도 한다.
+    "description"."OK"
+
+    ------------------------------
+    //데이터의 내용은 매번 변경되는 값. 가져오는 데이터이다
+    "data".{
+        "id" : 1,
+        "password" : "password is hello",
+        ~~
+    }
+
+    ------------------------------
+    "pagination" : null
+}
+
+==> 공통적으로 들어오는 값을 어떻게 다뤄야할까?
+
+======================================================
+
+java.model.network
+=> header 작성
+
+=> getContoroller 에서 getHeadr() 메소드로 실행
+
+======================================================
+
+data 부분은 계속하여 변한다. 어떻게 코딩하는 것이 맞을까??
+
+generic을 이용한다. == <>
+
+header class에서 계속 실습
+
+======================================================
+
+현재 interface를 implements 하여 CRUD 함수 override하고 재정의 안한상태
+=> 아직 rest api를 적용한 상태가 아니다. (chapter 8에서 본격 시작)
+
+규칙 정하기
+1. create() 함수는 @PostMapping() => /api/user 로 맵핑이 된다.
+    파라미터로 @RequestBody를 통해 데이터를 받아올 예정
+
+2. read() 함수는 @GetMapping("{id}") => /api/user/{id}
+   파라미터는 url 주소에 들어간 정보를 가져오는 방법.
+
+   @Override
+   @GetMapping("{ids}") // api/user/{ids}
+   public Header read(@PathVariable(name = "ids") Long id) {
+       return null;
+   }
+
+   위와 같이 매개변수로 받아오는 변수명과 get mapping의 변수명이 다른 경우
+   @PathVariable을 통해 이름을 명시해 줄 수 있다.
+
+3. update() 함수는 @PutMapping("") // api/user
+
+4. delete() 함수는 @DeleteMapping("{id}") // /api/user/{id}
+    @Override
+    @DeleteMapping("{id}") // /api/user/{id}
+    public Header delete(@PathVariable Long id) {
+        return null;
+    }
+
+==> 위의 4개의 함수를 이용해 http 메소드 매칭을 시켜준다.
+
+======================================================

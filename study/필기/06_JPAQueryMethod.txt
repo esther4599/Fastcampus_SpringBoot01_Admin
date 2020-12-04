@@ -1,0 +1,11 @@
+Optional<User> user = userRepository.findById(1L);
+=> query로 작성하면 : select * from user where id = ?
+
+보통 기본적으로 검색을 하는 경우 변수값을 사용자가 모르는 경우가 많다.
+=> UserRepository에서 실습
+    // select * from user where account = ?
+    Optional<User> findByAccount(String account);
+
+=> UserRepositoryTest
+   Optional<User> user = userRepository.findByAccount("testUser");
+   => 코드 작성시 UserRepository에 작성한 코드에 불? 색? 들어오며 활성화 됨

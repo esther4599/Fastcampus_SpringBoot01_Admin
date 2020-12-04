@@ -1,0 +1,176 @@
+** Pagealbe & Page를 이용!!
+
+1. paging 기능 적용
+
+데이터를 내려 받아올 때 한 페이지에 몇 개의 데이터를 받아올지,
+총 몇 개의 데이터를 받아와 몇 개의 페이지까지 만들 수 있도록 할지를 설정한다.
+
+    1) work bench => 한 페이지에 1000개가 default
+       select * from user where 1=1 limit 0, 10;
+       = 0, 10 => 0은 시작 위치 / 10은 가져올 데이터 수
+       = 1=1 => where 문을 사용하기 위해 작성한 항상 참인 값
+         -> 그냥 1만 적어도 true로 인식한다.
+       + order by id desc; => 아이디 역순으로 가져오기
+
+
+    2) controller.api.UserApiController 에서 아래의 함수 작성
+
+    @GetMapping
+    public Header<List<UserApiResponse>> search(Pageable pageable){
+        log.info("{}", pageable);
+        return null;
+    }
+
+    코드가 위와 같을 때 아래와 같은 결과를 반환한다.
+    Page request [number: 0, size 20, sort: UNSORTED] => http://localhost:8080/api/user
+    Page request [number: 0, size 20, sort: UNSORTED] => http://localhost:8080/api/user?page=1
+
+    ---------------
+
+    @GetMapping("")
+        public Header<List<UserApiResponse>> search(@PageableDefault(sort = "id", direction = Sort.Direction.ASC, size = 15) Pageable pageable){
+            log.info("{}", pageable);
+            return null;
+    }
+
+    코드가 위와 같을 때
+    Page Request [number: 0, size 15, sort: id: ASC] => http://localhost:8080/api/user
+    Page request [number: 1, size 15, sort: id: ASC] => http://localhost:8080/api/user?page=1
+
+    ---------------
+
+    최종 코드
+
+    @GetMapping("")
+            public Header<List<UserApiResponse>> search(@PageableDefault(sort = "id", direction = Sort.Direction.ASC, size = 15) Pageable pageable){
+                log.info("{}", pageable);
+                return userApiLogicService.search(pageable);
+    }
+
+
+    3) 2에서 사용한 search함수 작성하기
+
+    //아래는 수정
+    private UserApiResponse response(User user){
+            // user -> userApiResponse
+            UserApiResponse userApiResponse = UserApiResponse.builder()
+                    .id(user.getId())
+                    .account(user.getAccount())
+                    .password(user.getPassword()) //todo 암호화, 길이
+                    .email(user.getEmail())
+                    .status(user.getStatus())
+                    .registeredAt(user.getRegisteredAt())
+                    .unregisteredAt(user.getUnregisteredAt())
+                    .build();
+
+            return userApiResponse; //반환형이 Header에서 UserApiResponse로 변경됨
+    }
+
+    //아래는 추가
+    public Header<List<UserApiResponse>> search(Pageable pageable){
+            Page<User> users = baseRepository.findAll(pageable);
+            List<UserApiResponse> userApiResponseList = users.stream()
+                    .map( user -> response(user))
+                    .collect(Collectors.toList()); //자료형 변환
+            return Header.OK(userApiResponseList);
+    }
+
+    => user가 담긴 페이지를 페이지 설정(pageable)에 맞게 page로 가져온다.
+    list에 data를 담은 뒤 header을 붙여 return 한다.
+
+    이때 기존에 사용하던 response()를 사용하면 각 데이터에 header을 붙여 리스트로 만드는 것이므로
+    함수를 수정한다.
+
+    http://localhost:8080/api/user?page=0 실행시
+
+    {
+        "transaction_time": "2020-11-27T19:48:27.539968",
+        "result_code": "OK",
+        "description": "OK",
+        "data":[
+            {"id": 1, "account": "TestUser1", "password": "password1", "status": "UNREGISTERED",…},
+            {"id": 2, "account": "TestUser2", "password": "password2", "status": "REGISTERED",…},
+            {"id": 3, "account": "TestUser3", "password": "password3", "status": "REGISTERED",…},
+            {"id": 4, "account": "TestUser4", "password": "password4", "status": "REGISTERED",…},
+            {"id": 5, "account": "TestUser5", "password": "password5", "status": "UNREGISTERED",…},
+            {"id": 6, "account": "TestUser6", "password": "password6", "status": "REGISTERED",…},
+            {"id": 7, "account": "TestUser7", "password": "password7", "status": "REGISTERED",…},
+            {"id": 8, "account": "TestUser8", "password": "password8", "status": "REGISTERED",…},
+            {"id": 9, "account": "TestUser9", "password": "password9", "status": "REGISTERED",…},
+            {"id": 10, "account": "TestUser10", "password": "password10", "status": "REGISTERED",…},
+            {"id": 11, "account": "TestUser11", "password": "password11", "status": "REGISTERED",…},
+            {"id": 12, "account": "TestUser12", "password": "password12", "status": "UNREGISTERED",…},
+            {"id": 13, "account": "TestUser13", "password": "password13", "status": "REGISTERED",…},
+            {"id": 14, "account": "TestUser14", "password": "password14", "status": "UNREGISTERED",…},
+            {"id": 15, "account": "TestUser15", "password": "password15", "status": "UNREGISTERED",…}
+        ]
+    }
+
+2. 상세 기능 추가
+front end와 개발을 맞출 때 페이지 하단에 버튼이 있는 경우가 대부분이다.
+이러한 버튼과 통신하는 기능을 구현한다.
+
+버튼 예시 )
+    이전  1   2   3   4   5   6   7   다음
+
+이전 = 현재 떠있는 페이지 이전의 페이지로 돌아갈 때
+다음 = 현재 떠있는 페이지 이후의 페이지로 넘어갈 때
+
+java.model.network / Pagination
+
+public class Pagination {
+
+    private Integer totalPages; // 화면에 보여줄 총 페이지 수
+    private Long totalElement; // 한 페이지에 보여줄 수 있는 사용자 수
+    private Integer currentPage; // 현제 페이지 정보
+    private Integer currentElement; // 현재 페이지에서 보여주는 총 페이지 수
+}
+
+위의 코드 작성
+---------------
+
+java.model.network / Header
+
+private Pagination pagination; //변수 추가
+
+public static <T> Header<T> OK(T data, Pagination pagination){ //함수 작성
+    return (Header<T>) Header.builder()
+        .transactionTime(LocalDateTime.now())
+        .resultCode("OK").description("OK")
+        .data(data)
+        .pagination(pagination).build();
+}
+
+------------------
+
+java.
+public Header<List<UserApiResponse>> search(Pageable pageable){
+
+        // page -> list<UserApiResponse>
+        Page<User> users = baseRepository.findAll(pageable);
+        List<UserApiResponse> userApiResponseList = users.stream()
+                .map( user -> response(user))
+                .collect(Collectors.toList()); //자료형 변환
+
+        Pagination pagination = Pagination.builder()
+                .totalPages(users.getTotalPages())
+                .totalElement(users.getTotalElements())
+                .currentPage(users.getNumber())
+                .currentElement(users.getNumberOfElements())
+                .build();
+
+        // list<UserApiResponse> -> header<list<UserApiResponse>>
+        return Header.OK(userApiResponseList,pagination);
+}
+
+=================================================================================
+
+* 다른 기능들 처럼 코드 리팩토리 하기
+
+1. CRUDController 에 search 함수를 작성한다.
+
+2. java.ifs.CRUDInterface에 search 함수 작성
+
+3. 각 service에 search함수 작성
+
+=================================================================================

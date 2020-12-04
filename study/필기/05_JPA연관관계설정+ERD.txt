@@ -1,0 +1,85 @@
+
+JPA 연관관계 설정?
+관계 - annotation
+일대일 - @OneToOne
+일대다 - @OneToMany
+다대일 - @ManyToOne
+다대다 - @ManyToMany
+
+========================================================================
+
+일대다 관계?
+한 명의 user는 여러 상품을 구매할 수 있다.
+사용자는 주문내역이라는 테이블을 갖고 주문내역이라는 테이블은 상품과 사용자의 정보를 갖는다.
+사용자(one) - 주문내역(many)
+*** 주문내역(many)- 아이템(one)
+위와 같이 테이블을 만들면 사용가 어떤 아이템을 주문했는지 알 수 있으며,
+한 아이템이 몇번이나 주문이 되었는지도 알 수 있다.
+
+========================================================================
+
+workbench를 활용한 데이터베이스 구축??
+상단 메뉴바에서 Database -> Reverse Engineer
+-> 접속할 테이터베이스 정보와 계정 정보를 입력
+-> 사용 데이터베이스 스키마 선택 (study)
+-> 실행 선택
+==> 현재 데이터베이스의 스키마를 볼 수 있다.
+
+왼쪽의 메뉴바에서 메뉴를 클릭하고 화면을 다시 클릭함으로써 데이터를 만들고 기타 설정을 진행할 수 있다.
+foreign key 설정 -> 왼쪽 메뉴의 관계도를 통해 설정이 가능하다. (점선: 한쪽만 디테일을 아는 경우, 실선: 양쪽 다 디테일을 아는 경우) 자동으로 외래키가 등록된다.
+
+모든 관계 설정이 끝나면 상단 메뉴바 Database -> forward engineer
+-> 저장할 데이터베이스 정보, 계정 정보 입력
+-> 설정 (테이블 메뉴 -> 외래키 생성 스킵, 외래키에 대한 인덱스 생성 스킵 / 코드 제너레이션 ->  이전에 있던 오브젝트 드랍 선택)
+-> 어느 스키마에 어떤 테이블을 만들지를 보여주는 화면. 기본적으로 erd에서 만든 테이블은 모두 선택되어있다. 좌측 = 선택된 테이블, 우측 = 선택이 되지 않은 테이블
+-> 스크립트 확인 가능
+
+===> ????? 왜 mydb 스키마가 자동으로 선택되는  걸까...?
+
+========================================================================
+
+jpa를 통해 만들어 둔 테이블간 연관관계 설정??
+annotation을 이용.
+
+@OneToMany @ManyToOne 등
+앞에 오는 특징이 해당 객체의 특징 => 뒤에 해당하는 객체를 변수로 갖는다.
+one 특징을 갖는 객체의 annotation을 적으며 mappedBy 설정을 해준다.
+=> 이후 연관관계를 설정한 파일들 오류 조심 *변수 타입이 Long 에서 객체로 변경됨*
+
+위의 주석의 파라미터 fetch??
+lazy = 지연 로딩   vs   eager = 즉시 로딩
+
+itemRepositoryTest 에서 read()함수를 lazy로 실행하면 쿼리문이 다음과 같다.
+--lazy 버전
+select item0_.id as id1_0_0_, item0_.content as content2_0_0_,
+    item0_.name as name3_0_0_, item0_.price as price4_0_0_
+from item item0_ where item0_.id=?
+
+--eager 버전
+select item0_.id as id1_0_0_, item0_.content as content2_0_0_,
+    item0_.name as name3_0_0_, item0_.price as price4_0_0_,
+    orderdetai1_.item_id as item_id3_1_1_,
+    orderdetai1_.id as id1_1_1_, orderdetai1_.id as id1_1_2_,
+    orderdetai1_.item_id as item_id3_1_2_,
+    orderdetai1_.order_at as order_at2_1_2_,
+    orderdetai1_.user_id as user_id4_1_2_,
+    user2_.id as id1_2_3_, user2_.account as account2_2_3_,
+    user2_.created_at as created_3_2_3_,
+    user2_.created_by as created_4_2_3_,
+    user2_.email as email5_2_3_, user2_.phone_number as phone_nu6_2_3_,
+    user2_.updated_at as updated_7_2_3_, user2_.updated_by as updated_8_2_3_
+from item item0_
+left outer join order_detail orderdetai1_
+    on item0_.id=orderdetai1_.item_id
+    left outer join user user2_
+    on orderdetai1_.user_id=user2_.id where item0_.id=?
+
+=> lazy = 별 다른 요청이 없으면 연관관계로 설정이된 테이블을 join하지 않는다.
+반면에 eager = 즉시 연관관계에 있는 데이터들까지 로드한다. 로드 시간으로 인한 성능 저하 등의 문제가 있을 수 있다.
+**추천은 lazy / 연관관계가 한건만 존재하는 경우는 eager도 괜찮음**
+========================================================================
+
+@ToString(exclude = {})
+=> 한 객체에 두 개 이상의 변수를 연관 관계로 설정하면 toString함수가 상호참조 되어서
+    stack overflow 오류가 발생할 수 있다. **상호연관 관계 해제해주기**
+

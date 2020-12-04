@@ -1,0 +1,28 @@
+연관 관계 설정 => DB의 테이블과 조금 달라질 수 있음
+
+1. user : order group = 1 : n
+user -> 여러개의 order group을 갖을 수 있도록 List로 order group을 갖도록 변수를 만든다.
+    @OneToMany 주석 작성. (fetch = Lazy, mappedBy = "상대 테이블에 저장된 변수명")
+
+order group -> 하나의 user을 변수로 => 기존에 갖고 있던 id 변수를 user로 변경
+    @ManyToOne 주석 작성
+
+
+2. order group : order detail = 1 : n
+order group -> 여러개의 order detail을 갖을 수 있도록 List로 order detail을 갖도록 변수로 선언
+    @OneToMany 주석 작성 (fetch = lazy, mappedBy = "")
+
+order detail -> 하나의 group을 변수로 갖는다. => 기존에 갖고 있던 id를 객체로 변경
+    @ManyToOne 주석 작성
+
+//아래도 같은 방식으로 작성한다.
+3. item : order detail = 1 : n
+
+4. partner : item = 1 : n
+
+category : partner = 1 : n
+
+================================
+
+위와 같은 연관 관계 설정을 하면 별도의 join query 없이 데이터를 자유롭게 가져와 사용할 수 있다.
+==> JPA의 장점 
